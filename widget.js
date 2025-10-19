@@ -251,6 +251,10 @@
         applyStyles() {
             const style = document.createElement('style');
             style.textContent = `
+                #fluxr-widget-root * {
+                    box-sizing: border-box;
+                }
+
                 #fluxr-widget-root {
                     position: fixed;
                     z-index: 999999;
@@ -275,7 +279,7 @@
                     background: var(--flx-color-primary); 
                     color: white; 
                     border: none; 
-                    border-radius: 30px;
+                    border-radius: 100px;
                     height: 60px;
                     padding: 0 24px;
                     font-size: 16px;
@@ -413,6 +417,7 @@
                 .flx-form-group {
                     margin-bottom: 20px;
                     text-align: left;
+                    box-sizing: border-box;
                 }
 
                 .flx-label {
@@ -421,6 +426,7 @@
                     color: var(--flx-color-primary);
                     font-weight: 600;
                     font-size: 14px;
+                    box-sizing: border-box;
                 }
 
                 .flx-input {
@@ -432,6 +438,8 @@
                     font-family: var(--flx-font);
                     transition: all 0.2s;
                     background: white;
+                    box-sizing: border-box !important;
+                    max-width: 100%;
                 }
 
                 .flx-input:focus {
@@ -670,6 +678,7 @@
                     position: relative;
                     display: flex;
                     align-items: center;
+                    width: 100%;
                 }
 
                 .flx-country-selector {
@@ -685,11 +694,13 @@
                     display: flex;
                     align-items: center;
                     gap: 6px;
+                    box-sizing: border-box;
                 }
 
                 .flx-phone-input {
-                    padding-left: 100px;
-                    width: 100%;
+                    padding-left: 100px !important;
+                    width: 100% !important;
+                    box-sizing: border-box !important;
                 }
 
                 .flx-country-dropdown {
@@ -736,7 +747,7 @@
                         right: 16px;
                         width: auto;
                         justify-content: center;
-                        border-radius: var(--flx-radius);
+                        border-radius: 100px;
                         height: auto;
                         padding: 16px 24px;
                     }
@@ -963,7 +974,7 @@
                         <label class="flx-label">Payment Method</label>
                         <div class="flx-segmented">
                             <button class="flx-segment ${method === 'voucher' ? 'active' : ''}" onclick="window.FluxrWidget.setMethod('voucher')">
-                                🎟️ Voucher (SA)
+                                🇿🇦 Voucher (SA)
                             </button>
                             <button class="flx-segment ${method === 'card' ? 'active' : ''}" onclick="window.FluxrWidget.setMethod('card')">
                                 💳 Card Payment
@@ -1194,7 +1205,7 @@
             this.setState({ 
                 selectedCountry: country,
                 phoneE164: newPhone,
-                network: null // Reset network when country changes
+                network: null
             });
             this.hideCountryDropdown();
         }
@@ -1220,7 +1231,6 @@
             const phoneContainer = this.modalEl.querySelector('.flx-phone-input-container');
             phoneContainer.appendChild(dropdown);
 
-            // Close dropdown when clicking outside
             setTimeout(() => {
                 const clickHandler = (e) => {
                     if (!dropdown.contains(e.target) && !phoneContainer.contains(e.target)) {
@@ -1252,7 +1262,7 @@
 
         async continueStep1() {
             if (Object.keys(widgetState.errors).length > 0) {
-                return; // Don't proceed if there are validation errors
+                return;
             }
             
             const { method, amountUsd, phoneE164 } = widgetState;
