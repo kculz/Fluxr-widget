@@ -46,8 +46,7 @@
         selection: null,
         reference: null,
         bundles: [],
-        errors: {},
-        submitted: false // Track if form has been submitted
+        errors: {}
     };
 
     // --- Validation Functions ---
@@ -199,29 +198,11 @@
             document.body.appendChild(this.root);
             this.applyStyles(); 
             this.render();
-            
-            // Add responsive event listener
-            window.addEventListener('resize', this.handleResize.bind(this));
-        }
-
-        handleResize() {
-            const wasMobile = this.isMobile;
-            this.isMobile = window.innerWidth <= 768;
-            
-            // Re-render if mobile state changed
-            if (wasMobile !== this.isMobile && widgetState.step > 0) {
-                this.render();
-            }
         }
 
         setState(updates) {
             const oldStep = widgetState.step;
             widgetState = { ...widgetState, ...updates };
-            
-            // Only validate when form has been submitted or we're changing steps
-            if (widgetState.submitted || updates.step !== undefined) {
-                this.validateCurrentStep();
-            }
             
             if (widgetState.step !== oldStep) {
                 fireEvent('flx_step', { step: widgetState.step });
@@ -231,7 +212,7 @@
             }
         }
 
-        validateCurrentStep() {
+        validateCurrentStep(showErrors = false) {
             const { step, phoneE164, voucherCode, amountUsd, selection, method } = widgetState;
             const errors = {};
 
@@ -251,7 +232,11 @@
                 if (selectionError) errors.selection = selectionError;
             }
 
-            widgetState.errors = errors;
+            if (showErrors) {
+                widgetState.errors = errors;
+            }
+            
+            return errors;
         }
 
         render() {
@@ -756,7 +741,6 @@
                     font-size: 14px;
                 }
 
-                /* Enhanced Responsive Styles */
                 @media (max-width: 768px) {
                     .flx-fab {
                         bottom: 16px;
@@ -765,37 +749,17 @@
                         border-radius: 100px;
                         height: 60px;
                         padding: 0 20px;
-                        font-size: 15px;
                     }
 
                     .flx-modal {
                         max-width: 100%;
                         max-height: 95vh;
                         margin: 0;
-                        border-radius: 24px 24px 0 0;
                     }
 
                     .flx-modal-overlay {
                         padding: 0;
                         align-items: flex-end;
-                    }
-
-                    .flx-modal-header {
-                        padding: 20px;
-                    }
-
-                    .flx-modal-body {
-                        padding: 20px;
-                        max-height: 60vh;
-                    }
-
-                    .flx-modal-footer {
-                        padding: 20px;
-                        flex-direction: column;
-                    }
-
-                    .flx-btn {
-                        width: 100%;
                     }
 
                     .flx-country-dropdown {
@@ -805,231 +769,6 @@
                         right: 20px;
                         transform: translateY(-50%);
                         max-height: 70vh;
-                        z-index: 1000001;
-                    }
-
-                    .flx-segmented {
-                        flex-direction: column;
-                    }
-
-                    .flx-segment {
-                        text-align: center;
-                    }
-                }
-
-                @media (max-width: 480px) {
-                    .flx-fab {
-                        height: 56px;
-                        padding: 0 16px;
-                        font-size: 14px;
-                    }
-
-                    .flx-fab span {
-                        display: none;
-                    }
-
-                    .flx-fab svg {
-                        margin-right: 0;
-                    }
-
-                    .flx-modal-header {
-                        padding: 16px;
-                    border-radius: 24px 24px 0 0;
-                    flex-wrap: wrap;
-                    gap: 8px;
-                    min-height: 72px;
-                    align-items: center;
-                    justify-content: space-between;
-                    position: sticky;
-                        top: 0;
-                        z-index: 10;
-                    }
-
-                    .flx-modal-title {
-                        font-size: 18px;
-                        order: 2;
-                        flex: 1;
-                        text-align: center;
-                        margin: 0 8px;
-                    }
-
-                    .flx-back-btn {
-                        order: 1;
-                        width: 28px;
-                        height: 28px;
-                        font-size: 18px;
-                    }
-
-                    .flx-close-btn {
-                        order: 3;
-                        width: 28px;
-                        height: 28px;
-                        font-size: 20px;
-                    }
-
-                    .flx-modal-body {
-                        padding: 16px;
-                        max-height: calc(100vh - 140px);
-                        overflow-y: auto;
-                    }
-
-                    .flx-modal-footer {
-                        padding: 16px;
-                        position: sticky;
-                        bottom: 0;
-                        background: white;
-                        border-top: 1px solid #e5e7eb;
-                    }
-
-                    .flx-input {
-                        padding: 14px 12px;
-                        font-size: 16px; /* Prevents zoom on iOS */
-                    }
-
-                    .flx-phone-input {
-                        padding-left: 90px !important;
-                    }
-
-                    .flx-country-selector {
-                        left: 8px;
-                        padding: 4px 6px;
-                        font-size: 14px;
-                    }
-
-                    .flx-option {
-                        padding: 14px;
-                    }
-
-                    .flx-option-title {
-                        font-size: 15px;
-                    }
-
-                    .flx-option-price {
-                        font-size: 13px;
-                    }
-
-                    .flx-review-card {
-                        padding: 16px;
-                    }
-
-                    .flx-review-row {
-                        font-size: 14px;
-                    margin-bottom: 10px;
-                    flex-direction: column;
-                        gap: 4px;
-                    }
-
-                    .flx-review-row:last-child {
-                        flex-direction: row;
-                        font-size: 16px;
-                    }
-
-                    .flx-success-icon {
-                        width: 60px;
-                        height: 60px;
-                        font-size: 30px;
-                    }
-
-                    .flx-success-title {
-                        font-size: 20px;
-                    }
-
-                    .flx-reference {
-                        padding: 12px;
-                        font-size: 14px;
-                        word-break: break-all;
-                    }
-                }
-
-                @media (max-width: 360px) {
-                    .flx-fab {
-                        bottom: 12px;
-                        ${config.desktopPosition === 'bottom-left' ? 'left: 12px;' : 'right: 12px;'}
-                        height: 52px;
-                        width: 52px;
-                        border-radius: 50%;
-                        padding: 0;
-                    }
-
-                    .flx-modal {
-                        border-radius: 20px 20px 0 0;
-                    max-height: 98vh;
-                    }
-
-                    .flx-modal-header {
-                        padding: 12px 16px;
-                        min-height: 64px;
-                    }
-
-                    .flx-modal-body {
-                        padding: 12px 16px;
-                        max-height: calc(100vh - 120px);
-                    }
-
-                    .flx-modal-footer {
-                        padding: 12px 16px;
-                    }
-
-                    .flx-btn {
-                        padding: 12px 16px;
-                        font-size: 15px;
-                    }
-
-                    .flx-form-group {
-                        margin-bottom: 16px;
-                    }
-
-                    .flx-label {
-                        font-size: 13px;
-                    }
-
-                    .flx-input {
-                        padding: 12px;
-                        font-size: 15px;
-                    }
-                }
-
-                /* Landscape mode adjustments */
-                @media (max-height: 500px) and (orientation: landscape) {
-                    .flx-modal {
-                        max-height: 98vh;
-                        max-width: 90vw;
-                    }
-
-                    .flx-modal-body {
-                        max-height: 50vh;
-                        padding: 16px 24px;
-                    }
-
-                    .flx-modal-header {
-                        padding: 16px 24px;
-                    }
-
-                    .flx-modal-footer {
-                        padding: 16px 24px;
-                    }
-                }
-
-                /* High DPI screens */
-                @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-                    .flx-fab {
-                        -webkit-font-smoothing: antialiased;
-                        -moz-osx-font-smoothing: grayscale;
-                    }
-                }
-
-                /* Reduced motion for accessibility */
-                @media (prefers-reduced-motion: reduce) {
-                    .flx-fab,
-                    .flx-btn,
-                    .flx-option,
-                    .flx-segment {
-                        transition: none;
-                    }
-
-                    .flx-modal,
-                    .flx-modal-overlay {
-                        animation: none;
                     }
                 }
             `;
@@ -1073,7 +812,7 @@
             this.modalEl.innerHTML = `
                 <div class="flx-modal" onclick="event.stopPropagation()">
                     <div class="flx-modal-header">
-                        ${step > 1 && step < 4 ? `<button class="flx-back-btn" onclick="window.FluxrWidget.goBack()">←</button>` : '<div style="width: 32px;"></div>'} 
+                        ${step > 1 && step < 4 ? `<button class="flx-back-btn" onclick="window.FluxrWidget.goBack()">←</button>` : ''} 
                         <div class="flx-modal-title">${titles[step]}</div>
                         <button class="flx-close-btn" onclick="window.FluxrWidget.close()">×</button>
                     </div>
@@ -1094,7 +833,7 @@
         }
         
         updateStep1Elements() {
-            const { method, phoneE164, voucherCode, amountUsd, errors, selectedCountry, submitted } = widgetState;
+            const { method, phoneE164, voucherCode, amountUsd, errors, selectedCountry } = widgetState;
             
             // Update segmented control
             const segments = this.modalEl.querySelectorAll('.flx-segment');
@@ -1138,15 +877,13 @@
                 }
             }
             
-            // Only show errors if form has been submitted
-            if (submitted) {
-                this.updateErrorMessages();
-            }
+            // Update error messages
+            this.updateErrorMessages();
             this.updateContinueButton();
         }
         
         updateStep2Elements() {
-            const { selection, errors, submitted } = widgetState;
+            const { selection, errors } = widgetState;
             
             const options = this.modalEl.querySelectorAll('.flx-option');
             options.forEach(option => {
@@ -1154,11 +891,11 @@
                 option.classList.toggle('selected', isSelected);
             });
             
-            // Only show selection error if form has been submitted
+            // Update selection error
             const selectionError = this.modalEl.querySelector('.flx-selection-error');
-            if (selectionError && submitted) {
+            if (selectionError) {
                 selectionError.textContent = errors.selection || '';
-                selectionError.style.display = errors.selection ? 'flex' : 'none';
+                selectionError.style.display = errors.selection ? 'block' : 'none';
             }
             
             const continueBtn = this.modalEl.querySelector('.flx-btn-primary');
@@ -1168,9 +905,7 @@
         }
         
         updateErrorMessages() {
-            const { errors, submitted } = widgetState;
-            
-            if (!submitted) return;
+            const { errors } = widgetState;
             
             // Phone error
             const phoneError = this.modalEl.querySelector('.flx-phone-error');
@@ -1210,13 +945,11 @@
         }
         
         updateContinueButton() {
-            const { method, phoneE164, voucherCode, amountUsd, errors, submitted } = widgetState;
             const continueBtn = this.modalEl.querySelector('.flx-btn-primary');
             
             if (continueBtn) {
-                // Only disable if form has been submitted and has errors
-                const hasErrors = submitted && Object.keys(errors).length > 0;
-                continueBtn.disabled = hasErrors;
+                // Don't disable button, let validation happen on submit
+                continueBtn.disabled = false;
             }
         }
         
@@ -1231,7 +964,7 @@
         }
 
         renderStep1() {
-            const { method, phoneE164, voucherCode, amountUsd, selectedCountry, errors, submitted } = widgetState;
+            const { method, phoneE164, voucherCode, amountUsd, selectedCountry, errors } = widgetState;
             
             return `
                 <div class="flx-modal-body">
@@ -1255,14 +988,14 @@
                             </button>
                             <input 
                                 type="tel" 
-                                class="flx-input flx-phone-input ${submitted && errors.phone ? 'error' : ''}"
+                                class="flx-input flx-phone-input ${errors.phone ? 'error' : ''}"
                                 value="${phoneE164.replace(selectedCountry.code, '')}"
                                 placeholder="771234567"
                                 onblur="window.FluxrWidget.handlePhoneBlur(this.value)"
                                 oninput="window.FluxrWidget.updatePhoneNumber(this.value)"
                             />
                         </div>
-                        <div class="flx-error-msg flx-phone-error" style="display: ${submitted && errors.phone ? 'flex' : 'none'}">
+                        <div class="flx-error-msg flx-phone-error" style="display: ${errors.phone ? 'flex' : 'none'}">
                             ⚠️ ${errors.phone || ''}
                         </div>
                         <div style="font-size: 12px; color: var(--flx-color-muted); margin-top: 6px;">
@@ -1274,12 +1007,12 @@
                         <label class="flx-label">Voucher Code</label>
                         <input 
                             type="text" 
-                            class="flx-input flx-voucher-input ${submitted && errors.voucher ? 'error' : ''}"
+                            class="flx-input flx-voucher-input ${errors.voucher ? 'error' : ''}"
                             value="${voucherCode}"
                             placeholder="1234-5678-9012"
                             oninput="window.FluxrWidget.updateVoucher(this.value)"
                         />
-                        <div class="flx-error-msg flx-voucher-error" style="display: ${submitted && errors.voucher ? 'flex' : 'none'}">
+                        <div class="flx-error-msg flx-voucher-error" style="display: ${errors.voucher ? 'flex' : 'none'}">
                             ⚠️ ${errors.voucher || ''}
                         </div>
                     </div>
@@ -1288,14 +1021,14 @@
                         <label class="flx-label">Amount (USD)</label>
                         <input 
                             type="number" 
-                            class="flx-input flx-amount-input ${submitted && errors.amount ? 'error' : ''}"
+                            class="flx-input flx-amount-input ${errors.amount ? 'error' : ''}"
                             value="${amountUsd || ''}"
                             placeholder="5.00"
                             min="1.00"
                             step="0.01"
                             oninput="window.FluxrWidget.updateAmount(this.value)"
                         />
-                        <div class="flx-error-msg flx-amount-error" style="display: ${submitted && errors.amount ? 'flex' : 'none'}">
+                        <div class="flx-error-msg flx-amount-error" style="display: ${errors.amount ? 'flex' : 'none'}">
                             ⚠️ ${errors.amount || ''}
                         </div>
                     </div>
@@ -1304,7 +1037,7 @@
         }
 
         renderStep2() {
-            const { phoneE164, network, selection, bundles, availableValueUsd, errors, submitted } = widgetState;
+            const { phoneE164, network, selection, bundles, availableValueUsd, errors } = widgetState;
             
             if (!network) { 
                 return `<div class="flx-loading"><div class="flx-spinner"></div><div>Finding bundles...</div></div>`;
@@ -1330,7 +1063,7 @@
                         `).join('')}
                     </div>
                     
-                    <div class="flx-error-msg flx-selection-error" style="display: ${submitted && errors.selection ? 'flex' : 'none'}; margin-top: 16px;">
+                    <div class="flx-error-msg flx-selection-error" style="display: ${errors.selection ? 'flex' : 'none'}; margin-top: 16px;">
                         ⚠️ ${errors.selection || ''}
                     </div>
                 </div>
@@ -1380,10 +1113,10 @@
         }
 
         renderFooterContent(step) {
-            const { errors, submitted } = widgetState;
+            const { errors } = widgetState;
             
             if (step === 1) {
-                const hasErrors = submitted && Object.keys(errors).length > 0;
+                const hasErrors = Object.keys(errors).length > 0;
                 
                 return `
                     <div class="flx-modal-footer">
@@ -1422,7 +1155,7 @@
         }
 
         open() {
-            this.setState({ step: 1, submitted: false });
+            this.setState({ step: 1 });
             fireEvent('flx_open');
         }
 
@@ -1438,31 +1171,30 @@
                 selection: null,
                 reference: null,
                 bundles: [],
-                errors: {},
-                submitted: false
+                errors: {}
             });
             fireEvent('flx_close');
         }
 
         goBack() {
-            this.setState({ step: widgetState.step - 1, submitted: false });
+            this.setState({ step: widgetState.step - 1 });
         }
         
         setMethod(method) {
-            this.setState({ method, amountUsd: null, voucherCode: '', submitted: false });
+            this.setState({ method, amountUsd: null, voucherCode: '', errors: {} });
         }
 
         updatePhoneNumber(phoneNumber) {
             const fullPhone = widgetState.selectedCountry.code + phoneNumber.replace(/\D/g, '');
-            this.setState({ phoneE164: fullPhone, submitted: false });
+            this.setState({ phoneE164: fullPhone });
         }
 
         updateVoucher(value) {
-            this.setState({ voucherCode: value.toUpperCase(), submitted: false });
+            this.setState({ voucherCode: value.toUpperCase() });
         }
 
         updateAmount(value) {
-            this.setState({ amountUsd: parseFloat(value) || null, submitted: false });
+            this.setState({ amountUsd: parseFloat(value) || null });
         }
 
         selectCountry(country) {
@@ -1471,8 +1203,7 @@
             this.setState({ 
                 selectedCountry: country,
                 phoneE164: newPhone,
-                network: null,
-                submitted: false
+                network: null
             });
             this.hideCountryDropdown();
         }
@@ -1528,11 +1259,11 @@
         }
 
         async continueStep1() {
-            // Mark form as submitted and validate
-            this.setState({ submitted: true });
-            this.validateCurrentStep();
+            // Validate and show errors on submit
+            const errors = this.validateCurrentStep(true);
             
-            if (Object.keys(widgetState.errors).length > 0) {
+            if (Object.keys(errors).length > 0) {
+                this.updateFormElements();
                 return;
             }
             
@@ -1553,7 +1284,7 @@
             const availableValueUsd = method === 'card' ? amountUsd : 5.00;
             
             this.setState({ availableValueUsd, selection: null });
-            this.setState({ step: 2, submitted: false });
+            this.setState({ step: 2 });
             
             try {
                 const bundles = await MockAPI.getBundles(widgetState.network, availableValueUsd);
@@ -1569,8 +1300,7 @@
                     type: 'full',
                     priceUsd: widgetState.availableValueUsd,
                     label: `Full airtime (${widgetState.availableValueUsd.toFixed(2)})`
-                },
-                submitted: false
+                }
             });
         }
 
@@ -1581,20 +1311,19 @@
                     bundleId: id,
                     priceUsd: price,
                     label: name
-                },
-                submitted: false
+                }
             });
         }
 
         continueStep2() {
-            // Mark as submitted and validate selection
-            this.setState({ submitted: true });
-            this.validateCurrentStep();
+            // Validate and show errors on submit
+            const errors = this.validateCurrentStep(true);
             
-            if (widgetState.errors.selection) {
+            if (Object.keys(errors).length > 0) {
+                this.updateFormElements();
                 return;
             }
-            this.setState({ step: 3, submitted: false });
+            this.setState({ step: 3 });
         }
 
         async processPayment() {
