@@ -743,13 +743,11 @@
                 @media (max-width: 768px) {
                     .flx-fab {
                         bottom: 16px;
-                        left: 16px;
-                        right: 16px;
+                        ${config.desktopPosition === 'bottom-left' ? 'left: 16px;' : 'right: 16px;'}
                         width: auto;
-                        justify-content: center;
                         border-radius: 100px;
-                        height: auto;
-                        padding: 16px 24px;
+                        height: 60px;
+                        padding: 0 20px;
                     }
 
                     .flx-modal {
