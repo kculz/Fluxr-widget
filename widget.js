@@ -49,6 +49,9 @@
         errors: {}
     };
 
+    // Track original body styles to restore on close
+    let originalBodyStyles = {};
+
     // --- Validation Functions ---
     const Validators = {
         phone: (phone) => {
@@ -97,7 +100,7 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         },
         async resolveNetwork(phone) {
-            await this.delay(500);
+            await this.delay(300);
             
             // Find the matching country
             const country = config.supportedCountries.find(c => phone.startsWith(c.code));
@@ -108,7 +111,7 @@
             return { phone_e164: phone, network, country: country.name };
         },
         async getBundles(network, maxUsd) {
-            await this.delay(600);
+            await this.delay(400);
             const allBundles = {
                 'Econet': [
                     { id: 'econet-data-1gb-week', name: 'Weekly Data Bundle - 1GB', type: 'data', price_usd: 5.00 },
@@ -361,7 +364,7 @@
                     border: none;
                     color: white;
                     cursor: pointer;
-                    font-size: 20px;
+                    font-size: 24px;
                     padding: 4px;
                     display: flex;
                     align-items: center;
@@ -370,6 +373,7 @@
                     height: 32px;
                     border-radius: 8px;
                     transition: background 0.2s;
+                    font-weight: bold;
                 }
 
                 .flx-back-btn:hover {
@@ -396,6 +400,7 @@
                     height: 32px;
                     border-radius: 8px;
                     transition: background 0.2s;
+                    font-weight: bold;
                 }
 
                 .flx-close-btn:hover {
@@ -741,6 +746,14 @@
                     font-size: 14px;
                 }
 
+                /* Prevent body scroll when modal is open */
+                body.flx-no-scroll {
+                    overflow: hidden !important;
+                    position: fixed;
+                    width: 100%;
+                    height: 100%;
+                }
+
                 @media (max-width: 768px) {
                     .flx-fab {
                         bottom: 16px;
@@ -779,6 +792,7 @@
             if (this.modalEl) {
                 this.modalEl.remove();
                 this.modalEl = null;
+                this.restoreBodyScroll();
             }
             if (!this.fabEl) {
                 this.fabEl = document.createElement('button');
@@ -812,14 +826,53 @@
             this.modalEl.innerHTML = `
                 <div class="flx-modal" onclick="event.stopPropagation()">
                     <div class="flx-modal-header">
-                        ${step > 1 && step < 4 ? `<button class="flx-back-btn" onclick="window.FluxrWidget.goBack()">←</button>` : ''} 
+                        ${step > 1 && step < 4 ? `<button class="flx-back-btn" onclick="window.FluxrWidget.goBack()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                        </button>` : ''} 
                         <div class="flx-modal-title">${titles[step]}</div>
-                        <button class="flx-close-btn" onclick="window.FluxrWidget.close()">×</button>
+                        <button class="flx-close-btn" onclick="window.FluxrWidget.close()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
                     </div>
                     ${this.renderBodyContent(step)}
                     ${this.renderFooterContent(step)}
                 </div>
             `;
+
+            // Prevent body scrolling when modal is open
+            this.preventBodyScroll();
+        }
+
+        preventBodyScroll() {
+            // Store original styles
+            originalBodyStyles = {
+                overflow: document.body.style.overflow,
+                position: document.body.style.position,
+                width: document.body.style.width,
+                height: document.body.style.height
+            };
+
+            // Apply no-scroll styles
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.classList.add('flx-no-scroll');
+        }
+
+        restoreBodyScroll() {
+            // Restore original styles
+            document.body.style.overflow = originalBodyStyles.overflow || '';
+            document.body.style.position = originalBodyStyles.position || '';
+            document.body.style.width = originalBodyStyles.width || '';
+            document.body.style.height = originalBodyStyles.height || '';
+            document.body.classList.remove('flx-no-scroll');
         }
         
         updateFormElements() {
@@ -1039,14 +1092,18 @@
         renderStep2() {
             const { phoneE164, network, selection, bundles, availableValueUsd, errors } = widgetState;
             
+            // Only show loading if network hasn't been resolved yet
             if (!network) { 
-                return `<div class="flx-loading"><div class="flx-spinner"></div><div>Finding bundles...</div></div>`;
+                return `<div class="flx-loading"><div class="flx-spinner"></div><div>Resolving network...</div></div>`;
             }
+
+            // Bundles should always be an array at this point (empty or populated)
+            const availableBundles = bundles || [];
 
             return `
                 <div class="flx-modal-body">
                     <div class="flx-summary">
-                        ${phoneE164} • ${network} 
+                        ${phoneE164} • ${network} • $${availableValueUsd.toFixed(2)} available
                     </div>
 
                     <div class="flx-option-list">
@@ -1055,12 +1112,18 @@
                             <div class="flx-option-price">${availableValueUsd.toFixed(2)} USD</div>
                         </div>
 
-                        ${bundles.map(bundle => `
-                            <div class="flx-option ${selection?.bundleId === bundle.id ? 'selected' : ''}" onclick="window.FluxrWidget.selectBundle('${bundle.id}', '${bundle.name}', ${bundle.price_usd})">
-                                <div class="flx-option-title">${bundle.name}</div>
-                                <div class="flx-option-price">${bundle.price_usd.toFixed(2)} USD</div>
-                            </div>
-                        `).join('')}
+                        ${availableBundles.length > 0 ? 
+                            availableBundles.map(bundle => `
+                                <div class="flx-option ${selection?.bundleId === bundle.id ? 'selected' : ''}" onclick="window.FluxrWidget.selectBundle('${bundle.id}', '${bundle.name}', ${bundle.price_usd})">
+                                    <div class="flx-option-title">${bundle.name}</div>
+                                    <div class="flx-option-price">${bundle.price_usd.toFixed(2)} USD</div>
+                                </div>
+                            `).join('')
+                            : 
+                            `<div style="text-align: center; padding: 20px; color: var(--flx-color-muted);">
+                                No bundles available for ${network} with $${availableValueUsd.toFixed(2)}.
+                            </div>`
+                        }
                     </div>
                     
                     <div class="flx-error-msg flx-selection-error" style="display: ${errors.selection ? 'flex' : 'none'}; margin-top: 16px;">
@@ -1173,11 +1236,25 @@
                 bundles: [],
                 errors: {}
             });
+            this.restoreBodyScroll();
             fireEvent('flx_close');
         }
 
         goBack() {
-            this.setState({ step: widgetState.step - 1 });
+            // Don't reset bundles when going back, preserve the fetched data
+            const currentStep = widgetState.step;
+            const newStep = currentStep - 1;
+            
+            // Only reset bundles if going back to step 1 (changing phone/network)
+           if (newStep === 1) {
+                this.setState({ 
+                    step: newStep,
+                    bundles: [],
+                    network: null
+                });
+            } else {
+                this.setState({ step: newStep });
+            }
         }
         
         setMethod(method) {
@@ -1269,6 +1346,7 @@
             
             const { method, amountUsd, phoneE164 } = widgetState;
             
+            // Resolve network if not already resolved
             if (!widgetState.network) {
                 try {
                     const result = await MockAPI.resolveNetwork(phoneE164);
@@ -1283,13 +1361,28 @@
             
             const availableValueUsd = method === 'card' ? amountUsd : 5.00;
             
-            this.setState({ availableValueUsd, selection: null });
-            this.setState({ step: 2 });
-            
+            // IMPORTANT: Fetch bundles BEFORE moving to step 2
             try {
                 const bundles = await MockAPI.getBundles(widgetState.network, availableValueUsd);
-                this.setState({ bundles });
+                
+                // Only transition to Step 2 after bundles are loaded
+                this.setState({ 
+                    step: 2,
+                    availableValueUsd, 
+                    selection: null,
+                    bundles: bundles,  // Set loaded bundles
+                    network: widgetState.network
+                });
             } catch (err) {
+                console.error('Failed to load bundles:', err);
+                // Even on error, move to step 2 but with empty bundles
+                this.setState({ 
+                    step: 2,
+                    availableValueUsd, 
+                    selection: null,
+                    bundles: [],
+                    network: widgetState.network
+                });
                 logAndSurfaceError({ code: 'BUNDLES_FETCH_FAILED', message: 'Failed to load bundles.'}, 'Fetch Bundles');
             }
         }
