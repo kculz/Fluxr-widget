@@ -749,9 +749,7 @@
                 /* Prevent body scroll when modal is open */
                 body.flx-no-scroll {
                     overflow: hidden !important;
-                    position: fixed;
-                    width: 100%;
-                    height: 100%;
+                    height: 100vh;
                 }
 
                 @media (max-width: 768px) {
@@ -845,34 +843,18 @@
                 </div>
             `;
 
-            // Prevent body scrolling when modal is open
-            this.preventBodyScroll();
+            // Only prevent scroll for steps 1-3, not for success step (4)
+            if (step < 4) {
+                this.preventBodyScroll();
+            }
         }
 
         preventBodyScroll() {
-            // Store original styles
-            originalBodyStyles = {
-                overflow: document.body.style.overflow,
-                position: document.body.style.position,
-                width: document.body.style.width,
-                height: document.body.style.height
-            };
-
-            // Apply no-scroll styles
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.width = '100%';
-            document.body.style.height = '100%';
             document.body.classList.add('flx-no-scroll');
         }
 
         restoreBodyScroll() {
-            // Restore original styles
-            document.body.style.overflow = originalBodyStyles.overflow || '';
-            document.body.style.position = originalBodyStyles.position || '';
-            document.body.style.width = originalBodyStyles.width || '';
-            document.body.style.height = originalBodyStyles.height || '';
-            document.body.classList.remove('flx-no-scroll');
+           document.body.classList.remove('flx-no-scroll');
         }
         
         updateFormElements() {
@@ -1223,6 +1205,7 @@
         }
 
         close() {
+            this.restoreBodyScroll();
             this.setState({ 
                 step: 0,
                 method: 'voucher',
@@ -1236,17 +1219,15 @@
                 bundles: [],
                 errors: {}
             });
-            this.restoreBodyScroll();
             fireEvent('flx_close');
         }
 
         goBack() {
-            // Don't reset bundles when going back, preserve the fetched data
             const currentStep = widgetState.step;
             const newStep = currentStep - 1;
             
             // Only reset bundles if going back to step 1 (changing phone/network)
-           if (newStep === 1) {
+            if (newStep === 1) {
                 this.setState({ 
                     step: newStep,
                     bundles: [],
@@ -1254,6 +1235,11 @@
                 });
             } else {
                 this.setState({ step: newStep });
+            }
+            
+            // If going back from step 4 to step 3, prevent scroll again
+            if (currentStep === 4 && newStep === 3) {
+                this.preventBodyScroll();
             }
         }
         
@@ -1450,6 +1436,9 @@
                     selection: { type: selection.type, bundleId: selection.bundleId, amount_usd: selection.priceUsd }
                 });
 
+                // Restore scroll before showing success
+                this.restoreBodyScroll();
+                
                 this.setState({ 
                     reference: sendResult.reference,
                     step: 4 
